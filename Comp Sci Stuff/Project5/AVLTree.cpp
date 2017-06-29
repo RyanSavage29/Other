@@ -1,0 +1,402 @@
+#include <iostream>
+#include <string>
+#include "AVLTree.h"
+#include <iomanip>
+#include <queue>
+using namespace std;
+
+AVLTree::AVLTree(){
+    root = NULL;
+}
+
+AVLTree::~AVLTree(){
+    
+
+}
+
+AVLNode* AVLTree::getRoot(){
+  return root;
+}
+
+
+// search value ss in the AVL tree
+bool AVLTree::find(string ss){
+  if (root == NULL) {
+    return false;
+  }
+  
+  AVLNode* node = root;
+  
+  while (node != NULL) {
+    if (ss.compare(node->ssn) == 0) {
+      return true;
+    }
+    if (ss.compare(node->ssn) < 0) {
+      node = node->left;
+    }
+    else{
+      node = node->right;
+    }
+  }
+  return false;
+}
+
+// return the height of the subtree rooted at node
+// if subtree is empty, height is -1
+// if subtree has one node, height is 0
+int AVLTree::height(AVLNode* node){
+  
+  if(node != NULL){
+    return node->height;
+  }
+  else{
+    return -1;
+  }
+}
+
+// return the balance factor of the node
+int AVLTree::balanceFactor(AVLNode* node){
+    return height(node->left) - height(node->right);
+}
+
+// update the height of the node
+// this should be done whenever the tree is modified
+void AVLTree::updateHeight(AVLNode* node){
+    int hl = height(node->left);
+    int hr = height(node->right);
+    node->height = (hl>hr ? hl : hr) + 1;
+}
+
+
+// rotate right the subtree rooted at node
+// return the new root of the subtree
+AVLNode* AVLTree::rotateRight(AVLNode* node){
+  AVLNode* lp = node->left;      // left child of node
+  if (node->parent!=NULL) {  // node is not root
+    if (node->parent->left == node) { // node is a left child
+      node->parent->left = lp;
+    }else{
+      node->parent->right = lp;     // node is a right child
+    }
+  }
+  
+  if (lp->right != NULL) {        // pointer update
+    lp->right->parent = node;
+  }
+  
+  lp->parent = node->parent;
+  node->left = lp->right;
+  lp->right = node;
+  node->parent = lp;
+  updateHeight(node);                   // after rotation, update height
+  updateHeight(lp);                     // after rotation, update height
+  if (node == root) {
+    root = lp;
+  }
+  return lp; // lp is the new root of the subtree
+}
+
+
+// rotate left the subtree rooted at node
+// return the new root of the subtree
+AVLNode* AVLTree::rotateLeft(AVLNode* node){
+  AVLNode* rp = node->right;
+  if (node->parent!=NULL) {
+    if (node->parent->left == node) {
+      node->parent->left = rp;
+    }else{
+      node->parent->right = rp;
+    }
+  }
+  
+  if (rp->left != NULL) {
+    rp->left->parent = node;
+  }
+  
+  rp->parent = node->parent;
+  
+  node->right = rp->left;
+  rp->left = node;
+  node->parent = rp;
+  node->parent = rp;
+  updateHeight(node);
+  updateHeight(rp);
+  if (node == root) {
+    root = rp;
+  }
+  return rp;
+}
+
+
+// rebalance a tree rooted at node
+// return the new root of the subtree
+AVLNode* AVLTree::balance(AVLNode* node){
+    updateHeight(node);
+    if (balanceFactor(node) == 2) {
+        if (balanceFactor(node->left) < 0) {
+            node->left = rotateLeft(node->left); // for left right case
+        }
+        AVLNode* temp = rotateRight(node);
+        updateHeight(temp);
+        return temp;
+    }
+    
+    if (balanceFactor(node) == -2) {
+        if (balanceFactor(node->right) > 0) {
+            node->right = rotateRight(node->right);  // for right left case
+        }
+        AVLNode* temp2 = rotateLeft(node);
+        updateHeight(temp2);
+        return temp2;
+    }
+    return node;
+}
+
+// insert a new node with (ss, na) to the AVL tree
+// if there exists ss value, return false
+// otherwise, insert it, balance the tree, return true
+bool AVLTree::insert(string ss, string na){
+  if(root == NULL){
+    root = new AVLNode(ss, na);
+    balance(root);
+    return true;
+  }
+  AVLNode* cur = root;
+  AVLNode* nxt = root;
+  while(nxt != NULL){
+    if(ss.compare(nxt->ssn) == 0){
+      return false;
+    }
+    if(ss.compare(nxt->ssn) < 0){
+      nxt = nxt->left;
+    }
+    else{
+      nxt = nxt->right;
+    }
+    if(nxt != NULL){
+      cur = nxt;
+    }
+  }
+  if(ss.compare(cur->ssn) < 0){
+    cur->left = new AVLNode(ss, na);
+    cur->left->parent = cur;
+  }
+  else{
+    cur->right = new AVLNode(ss, na);
+    cur->right->parent = cur;
+  }
+  while(cur != NULL){
+    balance(cur);
+    cur = cur->parent;
+  }
+  return true;
+}
+
+
+AVLNode* AVLTree::maxOfSubtree(AVLNode* node){
+  if (node == NULL) {
+    return NULL;
+  }
+  while (node->right != NULL) {
+    node = node->right;
+  }
+  return node;
+}
+
+// delete the node containing value ss
+// if there is not such node, return false
+// otherwise, delete the node, balance the tree, return true
+bool AVLTree::deleteNode(string ss){
+  if(ss.compare(root->ssn) == 0){
+    if(root->left == NULL && root->right == NULL){//root has no children
+      delete root;
+      root = NULL;
+      return true;
+    }
+    if(root->left == NULL){//root has no left child
+      AVLNode* temp = root->right;
+      delete root;
+      root = temp;
+      return true;
+    }
+    AVLNode* temp = maxOfSubtree(root->left);
+    AVLNode* balancer = temp->parent;
+    if(temp->ssn.compare(root->left->ssn) == 0){//temp is root->left
+      if(temp->left != NULL){
+	temp->parent->left = temp->left;
+	temp->left->parent = temp->parent;
+      }
+      else{//temp has no left
+	temp->parent->left = NULL;
+      }
+    }
+    else{//temp is not root->left
+      if(temp->left != NULL){
+	temp->parent->right = temp->left;
+	temp->left->parent = temp->parent;
+      }
+      else{
+	temp->parent->right = NULL;
+      }
+    }
+    root->ssn = temp->ssn;
+    root->name = temp->name;
+    delete temp;
+    while(balancer != NULL){
+      balance(balancer);
+      balancer = balancer->parent;
+    }
+    return true;
+  }
+  AVLNode* cur = root;
+  while(cur != NULL){
+    if(ss.compare(cur->ssn) == 0){//value is found
+      if(cur->left == NULL && cur->right == NULL){ //case where node has no children
+	AVLNode* balancer = cur->parent;
+	if(balancer->left != NULL && ss.compare(balancer->left->ssn) == 0){
+	    balancer->left = NULL;
+	}
+	else{
+	  balancer->right = NULL;
+	}
+	delete cur;
+	while(balancer != NULL){
+	  balance(balancer);
+	  balancer = balancer->parent;
+	}
+	return true;
+      }
+      else if(cur->right == NULL){//child is on left
+	AVLNode* balancer = cur->parent;
+	if(balancer->left->ssn.compare(cur->ssn) == 0){//node is a left child
+	  balancer->left = cur->left;
+	  delete cur;
+	  balancer->left->parent = balancer;
+	}
+	else{//node is a right child
+	  balancer->right = cur->left;
+	  delete cur;
+	  balancer->right->parent = balancer;
+	}
+	while(balancer != NULL){//balance
+	  balance(balancer);
+	  balancer = balancer->parent;
+	}
+	return true;
+      }
+      else if(cur->left == NULL){//child is on right
+	AVLNode* balancer = cur->parent;
+	if(balancer->left->ssn.compare(cur->ssn) == 0){//node is a left child
+	  balancer->left = cur->right;
+	  delete cur;
+	  balancer->left->parent = balancer;
+	}
+	else{//node is a right child
+	  balancer->right = cur->right;
+	  delete cur;
+	  balancer->right->parent = balancer;
+	}
+	while(balancer != NULL){//balance
+	  balance(balancer);
+	  balancer = balancer->parent;
+	}
+	return true;
+      }
+      else{//case where there is 2 children
+	AVLNode* replacement = maxOfSubtree(cur->left);
+	if(replacement->ssn.compare(cur->left->ssn) == 0){
+	  if(replacement->left != NULL){
+	    cur->left = replacement->left;
+	    replacement->left->parent = cur;
+	  }
+	  else{
+	    cur->left = NULL;
+	  }
+	}
+	else{
+	  if(replacement->left != NULL){
+	    replacement->parent->right = replacement->left;
+	    replacement->left->parent = replacement->parent;
+	  }
+	  else{
+	    replacement->parent->right = NULL;
+	  }
+	}
+	AVLNode* balancer = replacement->parent;
+	cur->name = replacement->name;
+	cur->ssn = replacement->ssn;
+	delete replacement;
+	while(balancer != NULL){
+	  balance(balancer);
+	  balancer = balancer->parent;
+	}
+	return true;
+      }
+    }
+    else if(ss.compare(cur->ssn) < 0){
+      cur = cur->left;
+    }
+    else{
+      cur = cur->right;
+    }
+  }
+  return false;
+}
+
+// internal function
+// do not call it directly
+void AVLTree::print(AVLNode* x, int indent){
+  if(x == NULL) return;
+  if (x->right != NULL) {
+    print(x->right, indent+4);
+  }
+  
+  if (indent != 0) {
+    cout << std::setw(indent) << ' ';
+  }
+  
+  if(x->right != NULL){
+    cout << " /\n" << std::setw(indent) << ' ';
+  }
+  
+  cout << x->ssn << endl;
+  
+  if (x->left != NULL) {
+    cout << std::setw(indent) << ' ' <<" \\\n";
+    print(x->left, indent+4);
+  }
+  
+}
+
+// print out the structure of the binary tree
+// use it for debugging, I love this function
+void AVLTree::print(){
+  int count = 0;
+  print(root, count);
+}
+
+
+// it does not level order traversal
+// it prints out the number of node
+// use it mainly for debugging
+void AVLTree::levelOrder(){
+	if(root == NULL){
+		cout<<"Tree size: 0"<<endl;
+	}
+	queue <AVLNode*> list;
+	list.push(root);
+	int counter = 0;
+	while(!list.empty()){
+		if(list.front()->left != NULL){
+			list.push(list.front()->left);
+		}
+		if(list.front()->right != NULL){
+			list.push(list.front()->right);
+		}
+		list.pop();
+		++counter;
+	}
+	cout<<"Tree size: " <<counter <<endl;
+}
+
+

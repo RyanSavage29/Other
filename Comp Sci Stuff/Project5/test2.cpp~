@@ -1,0 +1,38 @@
+#include <iostream>
+#include "AVLTree.h"
+using namespace std;
+
+int main(){
+  AVLTree temp;
+  temp.insert("05", "a");
+  temp.insert("08", "b");
+  temp.insert("09", "c");
+  temp.insert("03", "d");
+  temp.insert("06", "d");
+  temp.insert("07", "d");
+  temp.insert("02", "d");
+  temp.insert("01", "a");
+  temp.deleteNode("06");
+  cout<<"Removed 06"<<endl;
+  temp.print();
+  temp.insert("04", "b");
+  temp.insert("10", "c");
+  temp.insert("20", "d");
+  temp.insert("16", "d");
+  temp.deleteNode("10");
+  cout<<"Removed 10"<<endl;
+  temp.print();
+  temp.insert("11", "d");
+  temp.insert("12", "d");
+  
+  temp.print();
+  cout << "Delete 12, 10, 09 06" << endl;
+  temp.deleteNode("12");
+  cout<<"Removed 12"<<endl;
+  temp.print();
+  
+  temp.deleteNode("09");
+  cout<<"Removed 09"<<endl;
+  temp.print();
+  
+}

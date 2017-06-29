@@ -1,0 +1,5 @@
+Project 3 runs faster than project 2 for a few reasons.
+The first is that linked lists do not need to be resized at all, while arrays do if the size constantly changes.
+In project 2, the size of the array changes quite often at the higher sized files.
+Secondly, deleting an item in Project 2 also means shifting every following element down one.
+This takes extra time. But linked lists can just delete the node and reconnect the list.
